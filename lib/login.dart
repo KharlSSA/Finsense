@@ -25,8 +25,8 @@ class LoginScreen extends StatelessWidget {
         children: [
           // Add logo here
           Image.asset(
-            'finsense-logo.png', // Make sure to update with the correct path
-            height: 100, // Set the height of the logo
+            'assets/finsense-logo.png',
+            height: 100,
           ),
           Row(
             mainAxisAlignment:
@@ -41,7 +41,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                'FINENSE!',
+                'FINSENSE!',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -102,11 +102,15 @@ class LoginScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
-                onPressed: () {
+              InkWell(
+                onTap: () {
                   // function sa google api
                 },
-                icon: Icon(Icons.g_mobiledata, size: 30, color: Colors.black),
+                child: Image.asset(
+                  'assets/Google.png', // Replace with your image path
+                  height: 30,
+                  width: 30,
+                ),
               ),
             ],
           ),
