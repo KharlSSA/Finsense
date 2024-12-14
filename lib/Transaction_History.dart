@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'dashboard.dart';
+import 'Finense_Report.dart';
+import 'Add_Transaction.dart';
+import 'profile.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -53,30 +56,66 @@ class TransactionsHistory extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.blue[900],
-        unselectedItemColor: Colors.grey,
+        currentIndex: 3, // This will be irrelevant since we navigate instead
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileApp()),
+              );
+              break;
+          }
+        },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu),
-            label: '',
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Add',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: '',
+            label: 'History',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: '',
+            label: 'Profile',
           ),
         ],
+        selectedItemColor: Colors.blue[900],
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
       ),
     );
   }

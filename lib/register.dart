@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login.dart';
 
 void main() => runApp(CreateAccountApp());
 
@@ -119,13 +120,17 @@ class CreateAccountScreen extends StatelessWidget {
                     ),
                     GestureDetector(
                       onTap: () {
-                        // Navigate to Sign In screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
+                        );
                       },
                       child: Text(
                         'Sign In',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue[900],
+                          color: const Color.fromARGB(255, 7, 40, 88),
+                          decoration: TextDecoration.underline,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

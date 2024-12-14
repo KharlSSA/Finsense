@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dashboard.dart';
+import 'Finense_Report.dart';
+import 'Transaction_History.dart';
+import 'Add_Transaction.dart';
+import 'login.dart';
 
 void main() => runApp(ProfileApp());
 
@@ -32,14 +37,20 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: CircleAvatar(
               backgroundColor: Colors.blue[50],
-              child: Icon(Icons.person, color: Colors.blue[900]),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/profile.jpg', // Replace with your image path
+                  width: 40, // Set width to control the size
+                  height: 40, // Set height to control the size
+                  fit: BoxFit.cover, // Ensures the image fits within the circle
+                ),
+              ),
             ),
           ),
         ],
         centerTitle: false,
       ),
       body: SingleChildScrollView(
-        // Fix: Allows scrolling if the content overflows
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -78,7 +89,12 @@ class ProfileScreen extends StatelessWidget {
               SizedBox(height: 24),
               Center(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[900],
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 64),
@@ -97,17 +113,66 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+        currentIndex: 4,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileApp()),
+              );
+              break;
+          }
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Add',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
         selectedItemColor: Colors.blue[900],
         unselectedItemColor: Colors.grey,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: ''),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.calculate), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
+        showUnselectedLabels: true,
       ),
     );
   }

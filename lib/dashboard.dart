@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
+import 'Add_Transaction.dart';
+import 'Finense_Report.dart';
+import 'Transaction_History.dart';
+import 'profile.dart';
 
-void main() => runApp(FinSenseApp());
-
-class FinSenseApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.blue[900],
         toolbarHeight: 180,
@@ -26,7 +17,10 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(
               'FINSENSE',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
@@ -41,7 +35,10 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 4),
             Text(
               '\$12,458.00',
-              style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -51,62 +48,124 @@ class HomeScreen extends StatelessWidget {
             child: CircleAvatar(
               backgroundColor: Colors.white,
               radius: 25,
-              child: Icon(Icons.person, size: 30, color: Colors.blue[900]),
+              backgroundImage: AssetImage('profile.jpg'),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildCard('Income', '\$8,245', Colors.green),
-                  _buildCard('Expenses', '\$3,425', Colors.red),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Transactions',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: Text('See All', style: TextStyle(color: Colors.blue)),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  _buildTransaction('Shopping', 'Today', '-\$85.00', Icons.shopping_cart, Colors.red),
-                  _buildTransaction('Restaurant', 'Yesterday', '-\$32.50', Icons.restaurant, Colors.red),
-                  _buildTransaction('Salary', 'Mar 1, 2024', '+\$3,500.00', Icons.account_balance_wallet, Colors.green),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: HomeContent(),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+        currentIndex: 0, // This will be irrelevant since we navigate instead
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileApp()),
+              );
+              break;
+          }
+        },
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Add',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
         selectedItemColor: Colors.blue[900],
         unselectedItemColor: Colors.grey,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.calculate), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+        showUnselectedLabels: true,
+      ),
+    );
+  }
+}
+
+class HomeContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildCard('Income', '\$8,245', Colors.green),
+                _buildCard('Expenses', '\$3,425', Colors.red),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent Transactions',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child:
+                          Text('See All', style: TextStyle(color: Colors.blue)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                _buildTransaction('Shopping', 'Today', '-\$85.00',
+                    Icons.shopping_cart, Colors.red),
+                _buildTransaction('Restaurant', 'Yesterday', '-\$32.50',
+                    Icons.restaurant, Colors.red),
+                _buildTransaction('Salary', 'Mar 1, 2024', '+\$3,500.00',
+                    Icons.account_balance_wallet, Colors.green),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -134,7 +193,8 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),
@@ -142,7 +202,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTransaction(String title, String date, String amount, IconData icon, Color color) {
+  Widget _buildTransaction(
+      String title, String date, String amount, IconData icon, Color color) {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.blue[50],
@@ -152,7 +213,8 @@ class HomeScreen extends StatelessWidget {
       subtitle: Text(date, style: TextStyle(color: Colors.grey)),
       trailing: Text(
         amount,
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+        style:
+            TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
       ),
     );
   }

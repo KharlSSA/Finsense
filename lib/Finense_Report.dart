@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dashboard.dart';
+import 'Add_Transaction.dart';
+import 'Transaction_History.dart';
+import 'profile.dart';
 
 void main() => runApp(FinancialSummaryApp());
 
@@ -48,35 +52,66 @@ class MonthlyOverviewScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: 0,
-        unselectedFontSize: 0,
+        currentIndex: 2, // This will be irrelevant since we navigate instead
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileApp()),
+              );
+              break;
+          }
+        },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.add),
+            label: 'Add',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calculate, color: Colors.blue[900]),
-            label: '',
+            icon: Icon(Icons.history),
+            label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
-        currentIndex: 3,
-        onTap: (index) {
-          // navigate ni diri
-        },
+        selectedItemColor: Colors.blue[900],
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
       ),
     );
   }
@@ -121,7 +156,8 @@ class MonthlyOverviewScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  if (icon != null) Icon(icon, color: Colors.blue[900], size: 20),
+                  if (icon != null)
+                    Icon(icon, color: Colors.blue[900], size: 20),
                   if (icon != null) SizedBox(width: 5),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

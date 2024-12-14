@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dashboard.dart';
+import 'Finense_Report.dart';
+import 'Transaction_History.dart';
+import 'profile.dart';
 
 void main() => runApp(FinenseTrackerApp());
 
@@ -16,52 +20,41 @@ class FinanceTrackerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Row(
-            children: [
-              Text(
-                'Example',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-              Icon(Icons.arrow_forward, color: Colors.grey, size: 14),
-              SizedBox(width: 5),
-              Text(
-                'Row',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
-          centerTitle: false,
-          leading: SizedBox(), // No leading widget
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      body: SingleChildScrollView(
+        // Wrap body content inside a scroll view
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image at the top (logo size)
+            Image.asset(
+              'assets/finsense-logo.png', // Replace with your logo's path
+              height: 50, // Adjust height for the logo size
+              width:
+                  50, // Adjust width if necessary, or set to null to keep it proportional
+              fit: BoxFit.contain, // Ensures the logo retains its aspect ratio
+            ),
+            SizedBox(height: 20), // Adjust spacing between image and text
+
+            // "Track Finances" text
             Text(
               'Track Finances',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.blue[900],
               ),
             ),
+            SizedBox(height: 25),
+            buildLabelField('Date:', 'Nov.18', readOnly: true),
             SizedBox(height: 20),
-            buildLabelField('Date:', 'Current Date'),
-            SizedBox(height: 15),
-            buildLabelField('Type of Transaction:', 'Type of Transaction',
+            buildLabelField('Type of Transaction:', 'Select Transaction',
                 isDropdown: true),
-            SizedBox(height: 15),
+            SizedBox(height: 20),
             buildLabelField('Enter Amount:', 'Amount'),
-            SizedBox(height: 15),
-            buildLabelField('Enter Amount:', 'Amount'),
-            SizedBox(height: 30),
+            SizedBox(height: 20),
+            buildLabelField('Enter Description:', 'Description'),
+            SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
                 // Add transaction logic
@@ -85,40 +78,72 @@ class FinanceTrackerScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: 0,
-        unselectedFontSize: 0,
+        currentIndex: 1,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage()),
+              );
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinanceTrackerScreen()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+              );
+              break;
+            case 3:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+              );
+              break;
+            case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileApp()),
+              );
+              break;
+          }
+        },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu, color: Colors.blue[900]),
-            label: '',
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.add),
+            label: 'Add',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.bar_chart),
+            label: 'Reports',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calculate, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.history),
+            label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person, color: Colors.grey),
-            label: '',
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
-        currentIndex: 0,
-        onTap: (index) {
-          // Handle navigation
-        },
+        selectedItemColor: Colors.blue[900],
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
       ),
     );
   }
 
-  Widget buildLabelField(String label, String placeholder, {bool isDropdown = false}) {
+  Widget buildLabelField(String label, String placeholder,
+      {bool isDropdown = false, bool readOnly = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -134,22 +159,27 @@ class FinanceTrackerScreen extends StatelessWidget {
         isDropdown
             ? DropdownButtonFormField<String>(
                 items: [
-                  DropdownMenuItem(value: 'Transaction', child: Text('Transaction')),
+                  DropdownMenuItem(
+                      value: 'Transaction', child: Text('Transaction')),
                   DropdownMenuItem(value: 'Income', child: Text('Income')),
                   DropdownMenuItem(value: 'Expense', child: Text('Expense')),
                 ],
                 onChanged: (value) {},
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               )
             : TextField(
-                readOnly: placeholder == 'Current Date',
+                readOnly: readOnly,
                 keyboardType:
                     placeholder == 'Amount' ? TextInputType.number : null,
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey[200],
                   hintText: placeholder,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
