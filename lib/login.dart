@@ -25,8 +25,8 @@ class LoginScreen extends StatelessWidget {
         children: [
           // Add logo here
           Image.asset(
-            'finsense-logo.png', 
-            height: 100, 
+            'assets/finsense-logo.png',
+            height: 100,
           ),
           Row(
             mainAxisAlignment:
@@ -41,7 +41,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                'FINENSE!',
+                'FINSENSE!',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
