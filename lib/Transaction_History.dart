@@ -1,21 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'Finense_Report.dart';
 import 'Add_Transaction.dart';
 import 'profile.dart';
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: TransactionsHistory(),
-    );
-  }
-}
 
 class TransactionsHistory extends StatelessWidget {
+  final String userId;
+
+  TransactionsHistory({required this.userId});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,26 +28,64 @@ class TransactionsHistory extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TransactionCard(
-              date: "Nov.17",
-              type: "Expenses",
-              amount: "\$5000",
-              category: "Electricity",
-              dueDate: "Nov.20",
-              color: Colors.red,
-            ),
-            SizedBox(height: 16),
-            TransactionCard(
-              date: "Nov.12",
-              type: "Income",
-              amount: "\$2500",
-              category: "Electricity",
-              dueDate: "Nov.21",
-              color: Colors.red,
-            ),
-          ],
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')  // Collection of users
+              .doc(userId)  // Document of the current user
+              .collection('transactions')  // Subcollection of transactions
+              .orderBy('date', descending: true)  // Sort by date in descending order
+              .snapshots(),  // Stream of real-time updates
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Center(child: Text('No transactions found.'));
+            }
+
+            var transactions = snapshot.data!.docs;
+
+            return ListView.builder(
+              itemCount: transactions.length,
+              itemBuilder: (context, index) {
+                var transaction = transactions[index];
+                Timestamp dateTimestamp = transaction['date'];
+                DateTime date = dateTimestamp.toDate();
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0), // Adds space between cards
+                  child: TransactionCard(
+                    date: '${date.month}/${date.day}/${date.year}',
+                    type: transaction['transaction_type'] ?? 'Unknown',
+                    amount: '\$${transaction['amount'].toString()}',
+                    category: transaction['description'] ?? 'No description',
+                    color: transaction['transaction_type'] == 'Income' ? Colors.green : Colors.red,
+                    onDelete: () {
+                      // Firestore delete logic
+                      FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userId)
+                          .collection('transactions')
+                          .doc(transaction.id)
+                          .delete()
+                          .then((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Transaction deleted successfully!'))
+                        );
+                      }).catchError((error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error deleting transaction: $error'))
+                        );
+                      });
+                    },
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -62,31 +95,36 @@ class TransactionsHistory extends StatelessWidget {
             case 0:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()),
+                MaterialPageRoute(
+                    builder: (context) => HomePage(userId: userId)),
               );
               break;
             case 1:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinenseTrackerApp(userId: userId)),
               );
               break;
             case 2:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinancialSummaryApp(userId: userId)),
               );
               break;
             case 3:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+                MaterialPageRoute(
+                    builder: (context) => TransactionsHistory(userId: userId)),
               );
               break;
             case 4:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileApp()),
+                MaterialPageRoute(
+                    builder: (context) => ProfileApp(userId: userId)),
               );
               break;
           }
@@ -126,16 +164,16 @@ class TransactionCard extends StatelessWidget {
   final String type;
   final String amount;
   final String category;
-  final String dueDate;
   final Color color;
+  final VoidCallback onDelete; // Callback for delete functionality
 
   const TransactionCard({
     required this.date,
     required this.type,
     required this.amount,
     required this.category,
-    required this.dueDate,
     required this.color,
+    required this.onDelete, // Pass the onDelete callback
   });
 
   @override
@@ -147,35 +185,38 @@ class TransactionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                date,
-                style: TextStyle(
-                  color: Colors.blue[900],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          // Left Section: Date, Type, and Category
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(
+                    color: Colors.blue[900],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                type,
-                style: TextStyle(
-                  color: Colors.blue[900],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                SizedBox(height: 4),
+                Text(
+                  type,
+                  style: TextStyle(
+                    color: Colors.blue[900],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                category,
-                style: TextStyle(color: Colors.grey[700]),
-              ),
-            ],
+                SizedBox(height: 8),
+                Text(
+                  category,
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+              ],
+            ),
           ),
+          // Right Section: Amount and Trash Icon
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -184,13 +225,13 @@ class TransactionCard extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.blue[900],
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  fontSize: 25,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                dueDate,
-                style: TextStyle(color: color),
+              SizedBox(height: 8), // Space between amount and trash icon
+              IconButton(
+                icon: Icon(Icons.delete, color: Colors.black),
+                onPressed: onDelete,
               ),
             ],
           ),
@@ -199,3 +240,4 @@ class TransactionCard extends StatelessWidget {
     );
   }
 }
+

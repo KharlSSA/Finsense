@@ -1,88 +1,201 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dashboard.dart';
 import 'Add_Transaction.dart';
 import 'Transaction_History.dart';
 import 'profile.dart';
 
-void main() => runApp(FinancialSummaryApp());
-
 class FinancialSummaryApp extends StatelessWidget {
+  final String userId;
+
+  FinancialSummaryApp({required this.userId});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MonthlyOverviewScreen(),
+      home: MonthlyOverviewScreen(userId: userId),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class MonthlyOverviewScreen extends StatelessWidget {
+  final String userId;
+
+  MonthlyOverviewScreen({required this.userId});
+
+  // Fetch transactions from Firestore
+  Stream<Map<String, dynamic>> getMonthlySummary() {
+    DateTime now = DateTime.now();
+
+    // Start and end of the current month
+    Timestamp startOfCurrentMonth = Timestamp.fromDate(DateTime(now.year, now.month, 1));
+
+    // Start and end of the last month
+    DateTime startOfLastMonth = DateTime(now.year, now.month - 1, 1);
+    DateTime endOfLastMonth = DateTime(now.year, now.month, 0); // Last day of last month
+    Timestamp startOfLastMonthTS = Timestamp.fromDate(startOfLastMonth);
+    Timestamp endOfLastMonthTS = Timestamp.fromDate(endOfLastMonth);
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('transactions')
+        .snapshots()
+        .map((snapshot) {
+      double currentIncome = 0, currentExpenses = 0;
+      double lastIncome = 0, lastExpenses = 0;
+
+      for (var doc in snapshot.docs) {
+        String transactionType = doc['transaction_type'] ?? '';
+        double amount = doc['amount'] ?? 0.0;
+        Timestamp date = doc['date'];
+
+        // Current Month Calculation
+        if (date.compareTo(startOfCurrentMonth) >= 0) {
+          if (transactionType == 'Income') currentIncome += amount;
+          if (transactionType == 'Expense') currentExpenses += amount;
+        }
+
+        // Last Month Calculation
+        if (date.compareTo(startOfLastMonthTS) >= 0 && date.compareTo(endOfLastMonthTS) <= 0) {
+          if (transactionType == 'Income') lastIncome += amount;
+          if (transactionType == 'Expense') lastExpenses += amount;
+        }
+      }
+
+      // Calculate Savings
+      double currentSavings = currentIncome - currentExpenses;
+      double lastSavings = lastIncome - lastExpenses;
+
+      return {
+        'currentIncome': currentIncome,
+        'currentExpenses': currentExpenses,
+        'currentSavings': currentSavings,
+        'lastIncome': lastIncome,
+        'lastExpenses': lastExpenses,
+        'lastSavings': lastSavings,
+      };
+    });
+  }
+
+  String calculatePercentageChange(double current, double last) {
+    if (last == 0) {
+      if (current == 0) return 'No data for current month';
+      return 'No data for last month';
+    }
+
+    double change = ((current - last) / last) * 100;
+    return '${change.toStringAsFixed(1)}%';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Monthly Overview",
+          style: TextStyle(
+            fontWeight: FontWeight.w600, // Semi-bold weight
+            color: Colors.blue[900], // Set text color to blue[900]
+          ),
+        ),
+        backgroundColor: Colors.white, // Set background to white
+        centerTitle: true, // Center the title
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            buildSummaryCard(
-              title: 'Monthly Overview',
-              value: '\$12,458.00',
-              change: '+15.3%',
-              isPositive: true,
-              subtitle: 'Total Income',
-            ),
-            SizedBox(height: 20),
-            buildSummaryCard(
-              title: 'Total Expenses',
-              value: '\$3,425.00',
-              change: '-8.4%',
-              isPositive: false,
-              subtitle: 'Current Month',
-            ),
-            SizedBox(height: 20),
-            buildSummaryCard(
-              title: 'Total Savings',
-              value: '\$9,033.00',
-              change: '+23.7%',
-              isPositive: true,
-              subtitle: 'Current Month',
-              icon: Icons.savings,
-            ),
-          ],
+        child: StreamBuilder<Map<String, dynamic>>(
+          stream: getMonthlySummary(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+
+            if (!snapshot.hasData) {
+              return Center(child: Text('No transactions found.'));
+            }
+
+            final data = snapshot.data!;
+            final currentIncome = data['currentIncome'] ?? 0.0;
+            final currentExpenses = data['currentExpenses'] ?? 0.0;
+            final currentSavings = data['currentSavings'] ?? 0.0;
+
+            final lastIncome = data['lastIncome'] ?? 0.0;
+            final lastExpenses = data['lastExpenses'] ?? 0.0;
+            final lastSavings = data['lastSavings'] ?? 0.0;
+
+            return Column(
+              children: [
+                buildSummaryCard(
+                  title: 'Total Income',
+                  value: '\$${currentIncome.toStringAsFixed(2)}',
+                  change: calculatePercentageChange(currentIncome, lastIncome),
+                  isPositive: currentIncome >= lastIncome,
+                  subtitle: 'Current Month',
+                ),
+                SizedBox(height: 20),
+                buildSummaryCard(
+                  title: 'Total Expenses',
+                  value: '\$${currentExpenses.toStringAsFixed(2)}',
+                  change: calculatePercentageChange(currentExpenses, lastExpenses),
+                  isPositive: currentExpenses < lastExpenses, // Less expenses is positive
+                  subtitle: 'Current Month',
+                ),
+                SizedBox(height: 20),
+                buildSummaryCard(
+                  title: 'Total Savings',
+                  value: '\$${currentSavings.toStringAsFixed(2)}',
+                  change: calculatePercentageChange(currentSavings, lastSavings),
+                  isPositive: currentSavings >= lastSavings,
+                  subtitle: 'Current Month',
+                  icon: Icons.savings,
+                ),
+              ],
+            );
+          },
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // This will be irrelevant since we navigate instead
+        currentIndex: 2,
         onTap: (index) {
           switch (index) {
             case 0:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()),
+                MaterialPageRoute(
+                    builder: (context) => HomePage(userId: userId)),
               );
               break;
             case 1:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinenseTrackerApp(userId: userId)),
               );
               break;
             case 2:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinancialSummaryApp(userId: userId)),
               );
               break;
             case 3:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+                MaterialPageRoute(
+                    builder: (context) => TransactionsHistory(userId: userId)),
               );
               break;
             case 4:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileApp()),
+                MaterialPageRoute(
+                    builder: (context) => ProfileApp(userId: userId)),
               );
               break;
           }
@@ -192,7 +305,11 @@ class MonthlyOverviewScreen extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: isPositive ? Colors.green : Colors.red,
+                      color: change == 'No data for current month' || change == 'No data for last month'
+                          ? Colors.black // Set the color to black if no data
+                          : isPositive
+                          ? Colors.green // If positive, green
+                          : Colors.red, // If negative, red
                     ),
                   ),
                 ],

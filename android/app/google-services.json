@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "913961202571",
+    "project_id": "finsense-a7a16",
+    "storage_bucket": "finsense-a7a16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913961202571:android:84eab735b3543c6533758e",
+        "android_client_info": {
+          "package_name": "com.example.finense"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA107lnPiojbrBewrAydVrpfkKVBjMOy3w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

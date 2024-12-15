@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'Add_Transaction.dart';
 import 'Finense_Report.dart';
 import 'Transaction_History.dart';
 import 'profile.dart';
 
 class HomePage extends StatelessWidget {
+  final String userId;
+  final String? userName;
+
+  HomePage({required this.userId, this.userName});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -12,80 +19,154 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.blue[900],
         toolbarHeight: 180,
         automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'FINSENSE',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Welcome back, Gerald!',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Total Balance',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-            SizedBox(height: 4),
-            Text(
-              '\$12,458.00',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold),
-            ),
-          ],
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text(
+                'Loading...',
+                style: TextStyle(color: Colors.white),
+              );
+            }
+            if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+              return Text(
+                'Error loading user',
+                style: TextStyle(color: Colors.white),
+              );
+            }
+
+            var userData = snapshot.data!.data() as Map<String, dynamic>;
+            String userName = (userData['full_name'] != null && userData['full_name'].toString().trim().isNotEmpty)
+                ? userData['full_name']
+                : 'User';
+
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userId)
+                  .collection('transactions')
+                  .snapshots(),
+              builder: (context, txnSnapshot) {
+                if (txnSnapshot.connectionState == ConnectionState.waiting) {
+                  return Text(
+                    'Loading transactions...',
+                    style: TextStyle(color: Colors.white),
+                  );
+                }
+
+                if (txnSnapshot.hasError || !txnSnapshot.hasData) {
+                  return Text(
+                    'Error loading transactions',
+                    style: TextStyle(color: Colors.white),
+                  );
+                }
+
+                var transactions = txnSnapshot.data!.docs;
+
+                double totalIncome = transactions
+                    .where((txn) => (txn.data() as Map<String, dynamic>)['transaction_type'] == 'Income')
+                    .fold(0.0, (sum, txn) => sum + (txn.data() as Map<String, dynamic>)['amount']);
+
+                double totalExpenses = transactions
+                    .where((txn) => (txn.data() as Map<String, dynamic>)['transaction_type'] == 'Expense')
+                    .fold(0.0, (sum, txn) => sum + (txn.data() as Map<String, dynamic>)['amount']);
+
+                double totalBalance = totalIncome - totalExpenses;
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space out left and right content
+                  crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
+                  children: [
+                    // Left side (FINSENSE and welcome message)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'FINSENSE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Welcome back, $userName!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Right side (Total Balance)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end, // Align text to the right
+                      children: [
+                        Text(
+                          'Total Balance',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '\$${totalBalance.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 25,
-              backgroundImage: AssetImage('profile.jpg'),
-            ),
-          ),
-        ],
       ),
-      body: HomeContent(),
+      body: HomeContent(userId: userId),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0, // This will be irrelevant since we navigate instead
+        currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()),
+                MaterialPageRoute(
+                    builder: (context) => HomePage(userId: userId)),
               );
               break;
             case 1:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinenseTrackerApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinenseTrackerApp(userId: userId)),
               );
               break;
             case 2:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => FinancialSummaryApp()),
+                MaterialPageRoute(
+                    builder: (context) => FinancialSummaryApp(userId: userId)),
               );
               break;
             case 3:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => TransactionsHistory()),
+                MaterialPageRoute(
+                    builder: (context) => TransactionsHistory(userId: userId)),
               );
               break;
             case 4:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileApp()),
+                MaterialPageRoute(
+                    builder: (context) => ProfileApp(userId: userId)),
               );
               break;
           }
@@ -121,53 +202,100 @@ class HomePage extends StatelessWidget {
 }
 
 class HomeContent extends StatelessWidget {
+  final String userId;
+
+  HomeContent({required this.userId});
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildCard('Income', '\$8,245', Colors.green),
-                _buildCard('Expenses', '\$3,425', Colors.red),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('transactions')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Center(child: Text('Error loading transactions'));
+        }
+
+        var transactions = snapshot.data!.docs;
+
+        double totalIncome = transactions
+            .where((txn) => (txn.data() as Map<String, dynamic>)['transaction_type'] == 'Income')
+            .fold(0.0, (sum, txn) => sum + (txn.data() as Map<String, dynamic>)['amount']);
+
+        double totalExpenses = transactions
+            .where((txn) => (txn.data() as Map<String, dynamic>)['transaction_type'] == 'Expense')
+            .fold(0.0, (sum, txn) => sum + (txn.data() as Map<String, dynamic>)['amount']);
+
+        double totalBalance = totalIncome - totalExpenses;
+
+        String formattedDate(Timestamp timestamp) {
+          DateTime dateTime = timestamp.toDate();
+          return DateFormat('yMMMd').format(dateTime);
+        }
+
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Recent Transactions',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child:
-                          Text('See All', style: TextStyle(color: Colors.blue)),
-                    ),
+                    _buildCard('Income', '\$${totalIncome.toStringAsFixed(2)}', Colors.green),
+                    _buildCard('Expenses', '\$${totalExpenses.toStringAsFixed(2)}', Colors.red),
                   ],
                 ),
-                SizedBox(height: 8),
-                _buildTransaction('Shopping', 'Today', '-\$85.00',
-                    Icons.shopping_cart, Colors.red),
-                _buildTransaction('Restaurant', 'Yesterday', '-\$32.50',
-                    Icons.restaurant, Colors.red),
-                _buildTransaction('Salary', 'Mar 1, 2024', '+\$3,500.00',
-                    Icons.account_balance_wallet, Colors.green),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent Transactions',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionsHistory(userId: userId),
+                              ),
+                            );
+                          },
+                          child: Text('See All', style: TextStyle(color: Colors.blue)),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    ...transactions.map((txn) {
+                      var txnData = txn.data() as Map<String, dynamic>;
+                      return _buildTransaction(
+                        txnData['description'] ?? 'No Description',
+                        formattedDate(txnData['date']),
+                        '\$${txnData['amount']?.toStringAsFixed(2) ?? '0.00'}',
+                        txnData['transaction_type'] == 'Income' ? Colors.green : Colors.red,
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -184,7 +312,11 @@ class HomeContent extends StatelessWidget {
         child: Column(
           children: [
             Icon(
-              title == 'Income' ? Icons.arrow_upward : Icons.arrow_downward,
+              title == 'Income'
+                  ? Icons.arrow_upward
+                  : title == 'Expenses'
+                  ? Icons.arrow_downward
+                  : Icons.account_balance_wallet,
               color: color,
               size: 24,
             ),
@@ -202,19 +334,30 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildTransaction(
-      String title, String date, String amount, IconData icon, Color color) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.blue[50],
-        child: Icon(icon, color: Colors.blue[900]),
-      ),
-      title: Text(title, style: TextStyle(fontSize: 16)),
-      subtitle: Text(date, style: TextStyle(color: Colors.grey)),
-      trailing: Text(
-        amount,
-        style:
-            TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+  Widget _buildTransaction(String title, String date, String amount, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                date,
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ],
+          ),
+          Text(
+            amount,
+            style: TextStyle(fontSize: 16, color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
