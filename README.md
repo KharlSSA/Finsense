@@ -1,4 +1,4 @@
-# finense
+# Finsense
 
 A new Flutter project.
 
